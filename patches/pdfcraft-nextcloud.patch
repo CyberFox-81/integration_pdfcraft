@@ -1,0 +1,361 @@
+diff --git a/apps/pdfcraft-web/Cargo.toml b/apps/pdfcraft-web/Cargo.toml
+index a8d472d..04ea93e 100644
+--- a/apps/pdfcraft-web/Cargo.toml
++++ b/apps/pdfcraft-web/Cargo.toml
+@@ -9,6 +9,10 @@ publish = false
+ [lints]
+ workspace = true
+ 
++[features]
++# See pdfcraft-ui-egui's `unbranded`: for redistributed modified builds.
++unbranded = ["pdfcraft-ui-egui/unbranded"]
++
+ [dependencies]
+ pdfcraft-ui-egui = { workspace = true }
+ eframe = { workspace = true, features = ["default_fonts", "glow", "persistence", "accesskit"] }
+@@ -16,5 +20,5 @@ egui = { workspace = true }
+ 
+ [target.'cfg(target_arch = "wasm32")'.dependencies]
+ wasm-bindgen-futures = "0.4"
+-web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlCanvasElement", "HtmlElement", "Location", "Url", "UrlSearchParams", "Response"] }
++web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlCanvasElement", "HtmlElement", "Location", "Url", "UrlSearchParams", "Response", "MessageEvent", "EventTarget"] }
+ js-sys = "0.3"
+diff --git a/apps/pdfcraft-web/src/main.rs b/apps/pdfcraft-web/src/main.rs
+index 1899c29..f79b1c5 100644
+--- a/apps/pdfcraft-web/src/main.rs
++++ b/apps/pdfcraft-web/src/main.rs
+@@ -51,12 +51,34 @@ fn main() {
+                             ctx.request_repaint();
+                         });
+                     }
++                    // `?host=parent`: a same-origin page embedding PdfCraft in an iframe (such
++                    // as the Nextcloud app) passes files in and takes saves back (`host` below).
++                    if query_param("host").as_deref() == Some("parent")
++                        && let Some(bridge) = host::Bridge::new()
++                    {
++                        // `?author=`: the host's name for the user signs their comments,
++                        // unless they chose a name in PdfCraft (the web default is "Guest").
++                        if let Some(author) = query_param("author").map(|a| a.trim().to_string()).filter(|a| !a.is_empty())
++                            && app.comment_prefs.author == "Guest"
++                        {
++                            app.comment_prefs.author = author.chars().take(200).collect();
++                        }
++                        bridge.listen(app.startup_inbox.clone(), cc.egui_ctx.clone());
++                        app.host_save = Some(bridge.save_fn());
++                        app.host_dirty = Some(bridge.dirty_fn());
++                        bridge.post_ready();
++                    }
+                     Ok(Box::new(app))
+                 }),
+             )
+             .await;
+         if let Err(e) = started {
+             eframe::web_sys::console::error_1(&e);
++            if query_param("host").as_deref() == Some("parent")
++                && let Some(bridge) = host::Bridge::new()
++            {
++                bridge.post_failed(&e.as_string().unwrap_or_else(|| format!("{e:?}")));
++            }
+         }
+     });
+ }
+@@ -80,6 +102,132 @@ async fn fetch_bytes(url: &str) -> Result<Vec<u8>, String> {
+     Ok(js_sys::Uint8Array::new(&buf).to_vec())
+ }
+ 
++/// The `postMessage` bridge to a same-origin parent page. Messages are plain objects with a
++/// `type`:
++///
++/// - `pdfcraft:ready` (to the parent): the app is listening; send files now.
++/// - `pdfcraft:open` (from the parent): `{ name, bytes }`, where `bytes` is an `ArrayBuffer` or
++///   `Uint8Array` holding a PDF. It opens in a tab, like a `?file=` URL.
++/// - `pdfcraft:save` (to the parent): `{ name, saveAs, bytes }` when the user saves; `bytes` is
++///   a transferred `ArrayBuffer`. The parent stores the file (and reports its own errors).
++/// - `pdfcraft:dirty` (to the parent): `{ dirty }` whenever unsaved work appears or goes away.
++/// - `pdfcraft:failed` (to the parent): `{ error }` when the app couldn't start.
++///
++/// Only the parent window on the app's own origin is heard or answered.
++#[cfg(target_arch = "wasm32")]
++mod host {
++    use eframe::wasm_bindgen::{JsCast, JsValue, closure::Closure};
++
++    #[derive(Clone)]
++    pub struct Bridge {
++        window: web_sys::Window,
++        parent: web_sys::Window,
++        origin: String,
++    }
++
++    impl Bridge {
++        /// `None` when the page isn't framed (there is no parent to talk to).
++        pub fn new() -> Option<Self> {
++            let window = web_sys::window()?;
++            let parent = window.parent().ok().flatten()?;
++            if js_sys::Object::is(&parent, &window) {
++                return None;
++            }
++            let origin = window.location().origin().ok()?;
++            Some(Self { window, parent, origin })
++        }
++
++        fn post(&self, message: &js_sys::Object, transfer: Option<&JsValue>) -> Result<(), String> {
++            let sent = match transfer {
++                Some(t) => self.parent.post_message_with_transfer(message, &self.origin, &js_sys::Array::of1(t)),
++                None => self.parent.post_message(message, &self.origin),
++            };
++            sent.map_err(|e| e.as_string().unwrap_or_else(|| format!("{e:?}")))
++        }
++
++        pub fn post_ready(&self) {
++            if let Some(m) = message(&[("type", "pdfcraft:ready".into()), ("version", env!("CARGO_PKG_VERSION").into())]) {
++                let _ = self.post(&m, None);
++            }
++        }
++
++        /// The app couldn't start (no WebGL, for example): let the parent say so.
++        pub fn post_failed(&self, error: &str) {
++            if let Some(m) = message(&[("type", "pdfcraft:failed".into()), ("error", error.into())]) {
++                let _ = self.post(&m, None);
++            }
++        }
++
++        /// Hear `pdfcraft:open` from the parent and queue the file like a `?file=` download.
++        pub fn listen(&self, inbox: pdfcraft_ui_egui::Inbox, ctx: egui::Context) {
++            let parent = self.parent.clone();
++            let origin = self.origin.clone();
++            let on_message = Closure::<dyn FnMut(web_sys::MessageEvent)>::new(move |event: web_sys::MessageEvent| {
++                if event.origin() != origin || !event.source().is_some_and(|s| js_sys::Object::is(&s, &parent)) {
++                    return;
++                }
++                let data = event.data();
++                if string(&data, "type").as_deref() != Some("pdfcraft:open") {
++                    return;
++                }
++                let name = string(&data, "name").filter(|n| !n.trim().is_empty()).unwrap_or_else(|| "document.pdf".to_string());
++                let Ok(bytes) = js_sys::Reflect::get(&data, &JsValue::from_str("bytes")) else { return };
++                let bytes = if let Some(array) = bytes.dyn_ref::<js_sys::Uint8Array>() {
++                    array.to_vec()
++                } else if bytes.is_instance_of::<js_sys::ArrayBuffer>() {
++                    js_sys::Uint8Array::new(&bytes).to_vec()
++                } else {
++                    return;
++                };
++                if let Ok(mut q) = inbox.lock() {
++                    q.push((name, bytes));
++                }
++                ctx.request_repaint();
++            });
++            if self.window.add_event_listener_with_callback("message", on_message.as_ref().unchecked_ref()).is_ok() {
++                // The listener lives as long as the page.
++                on_message.forget();
++            }
++        }
++
++        pub fn save_fn(&self) -> pdfcraft_ui_egui::HostSaveFn {
++            let bridge = self.clone();
++            Box::new(move |name: &str, bytes: &[u8], save_as: bool| {
++                let buffer = js_sys::Uint8Array::from(bytes).buffer();
++                let m =
++                    message(&[("type", "pdfcraft:save".into()), ("name", name.into()), ("saveAs", save_as.into()), ("bytes", buffer.clone().into())])
++                        .ok_or_else(|| "couldn't build the message".to_string())?;
++                bridge.post(&m, Some(&buffer))
++            })
++        }
++
++        pub fn dirty_fn(&self) -> pdfcraft_ui_egui::HostDirtyFn {
++            let bridge = self.clone();
++            let mut last = false;
++            Box::new(move |dirty: bool| {
++                if dirty != last {
++                    last = dirty;
++                    if let Some(m) = message(&[("type", "pdfcraft:dirty".into()), ("dirty", dirty.into())]) {
++                        let _ = bridge.post(&m, None);
++                    }
++                }
++            })
++        }
++    }
++
++    fn message(fields: &[(&str, JsValue)]) -> Option<js_sys::Object> {
++        let m = js_sys::Object::new();
++        for (key, value) in fields {
++            js_sys::Reflect::set(&m, &JsValue::from_str(key), value).ok()?;
++        }
++        Some(m)
++    }
++
++    fn string(data: &JsValue, key: &str) -> Option<String> {
++        js_sys::Reflect::get(data, &JsValue::from_str(key)).ok()?.as_string()
++    }
++}
++
+ #[cfg(not(target_arch = "wasm32"))]
+ fn main() {
+     eprintln!("pdfcraft-web targets wasm32: run `trunk serve` or `trunk build --release` in apps/pdfcraft-web");
+diff --git a/crates/ui-egui/Cargo.toml b/crates/ui-egui/Cargo.toml
+index f7f0406..362eb06 100644
+--- a/crates/ui-egui/Cargo.toml
++++ b/crates/ui-egui/Cargo.toml
+@@ -68,3 +68,8 @@ skrifa = "0.44"
+ [build-dependencies]
+ serde_json = { workspace = true }
+ toml = "1"
++
++[features]
++# Leave out the ArtCraft marks (docs/brand/), which modified builds must not carry
++# (docs/brand/LICENSE-brand.txt).
++unbranded = []
+diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
+index d0a389e..307cb1b 100644
+--- a/crates/ui-egui/src/dialogs.rs
++++ b/crates/ui-egui/src/dialogs.rs
+@@ -1107,10 +1107,14 @@ pub fn show(app: &mut PdfCraftApp, ctx: &egui::Context) {
+                             .small(),
+                         );
+                         ui.add_space(12.0);
++                        #[cfg(not(feature = "unbranded"))]
+                         ui.horizontal(|ui| {
+                             ui.label(egui::RichText::new(tl!("Part of")).color(t.text_muted));
+                             widgets::artcraft_logo(ui, 16.0);
+                         });
++                        // Modified builds may say what they are based on, in plain text.
++                        #[cfg(feature = "unbranded")]
++                        ui.label(egui::RichText::new("A modified build of PdfCraft by the ArtCraft team.").color(t.text_muted));
+                         ui.add_space(6.0);
+                         if let Some(cmd) = widgets::community_links(ui) {
+                             link_command = Some(cmd);
+diff --git a/crates/ui-egui/src/editing.rs b/crates/ui-egui/src/editing.rs
+index ecce8dc..49c47bd 100644
+--- a/crates/ui-egui/src/editing.rs
++++ b/crates/ui-egui/src/editing.rs
+@@ -403,7 +403,7 @@ impl PdfCraftApp {
+         }
+         #[cfg(target_arch = "wasm32")]
+         {
+-            let _ = (target, path);
++            let _ = path;
+             if !self.flatten_fill_sign_for_save(id) {
+                 return false;
+             }
+@@ -414,16 +414,32 @@ impl PdfCraftApp {
+                     return false;
+                 }
+             };
+-            match download(&name, &bytes) {
++            // An embedding page that asked for saves (`?host=parent`) gets the bytes; otherwise
++            // the browser downloads them.
++            let to_host = self.host_save.is_some();
++            let delivered = match &self.host_save {
++                Some(save) => save(&name, &bytes, matches!(target, SaveTarget::As)),
++                None => download(&name, &bytes),
++            };
++            match delivered {
+                 Ok(()) => {
+                     let _ = self.session.mark_saved(id, bytes, None);
+-                    if let Some(doc) = self.session.get(id) {
+-                        self.views[index].document_changed(&doc.info);
++                    if let Some(doc) = self.session.get(id)
++                        && let Some(view) = self.views.get_mut(index)
++                    {
++                        view.document_changed(&doc.info);
++                    }
++                    // The host reports where the file went (and any failure) itself.
++                    if !to_host {
++                        self.notify_fmt("Downloaded {name}", &[("name", &name)]);
+                     }
+-                    self.notify_fmt("Downloaded {name}", &[("name", &name)]);
+                     after(self);
+                     true
+                 }
++                Err(e) if to_host => {
++                    self.notify_fmt("Couldn't save {name}: {e}", &[("name", &name), ("e", &e)]);
++                    false
++                }
+                 Err(e) => {
+                     self.notify_fmt("Couldn't download {name}: {e}", &[("name", &name), ("e", &e.to_string())]);
+                     false
+diff --git a/crates/ui-egui/src/lib.rs b/crates/ui-egui/src/lib.rs
+index 3d2863c..a2e0282 100644
+--- a/crates/ui-egui/src/lib.rs
++++ b/crates/ui-egui/src/lib.rs
+@@ -341,6 +341,14 @@ pub enum OsEvent {
+ /// Returns the [`OsEvent`]s that arrived since it was last called (set by the desktop app).
+ pub type OsEventsFn = Box<dyn FnMut() -> Vec<OsEvent>>;
+ 
++/// Hands a saved PDF to the page embedding PdfCraft (web): `(name, bytes, save_as)`. `save_as`
++/// is `true` for Save As. Set by the web app when a host page (such as a Nextcloud app) asked
++/// for saves; without it the browser downloads the file.
++pub type HostSaveFn = Box<dyn Fn(&str, &[u8], bool) -> Result<(), String>>;
++
++/// Told every frame whether any tab has unsaved work, so a host page can warn before leaving.
++pub type HostDirtyFn = Box<dyn FnMut(bool)>;
++
+ pub struct PasswordPrompt {
+     pub name: String,
+     pub path: Option<String>,
+@@ -426,6 +434,10 @@ pub struct PdfCraftApp {
+     pub failed_inbox: FailedInbox,
+     /// Requests from the operating system, polled every frame (macOS Apple events).
+     pub os_events: Option<OsEventsFn>,
++    /// Save delivers to the embedding page instead of downloading (web, see [`HostSaveFn`]).
++    pub host_save: Option<HostSaveFn>,
++    /// Reports unsaved work to the embedding page (web, see [`HostDirtyFn`]).
++    pub host_dirty: Option<HostDirtyFn>,
+     /// A pending "save changes?" question (closing a dirty tab or quitting).
+     pub close_request: Option<CloseRequest>,
+     /// Save to this path instead of asking (tests and automation).
+@@ -690,6 +702,8 @@ impl PdfCraftApp {
+             startup_superseded: false,
+             failed_inbox: Default::default(),
+             os_events: None,
++            host_save: None,
++            host_dirty: None,
+             close_request: None,
+             save_override: None,
+             props_draft: None,
+@@ -1862,6 +1876,12 @@ impl eframe::App for PdfCraftApp {
+         self.guard_quit(ctx);
+         let now = ctx.input(|i| i.time);
+         self.autosave_tick(now);
++        if self.host_dirty.is_some() {
++            let dirty = self.first_dirty().is_some();
++            if let Some(report) = self.host_dirty.as_mut() {
++                report(dirty);
++            }
++        }
+         self.poll_updates();
+         // Shortcuts deferred last frame: the text field has taken that frame's typing since.
+         let deferred = std::mem::take(&mut self.deferred_commands);
+diff --git a/crates/ui-egui/src/widgets.rs b/crates/ui-egui/src/widgets.rs
+index 9e45c92..9a36d85 100644
+--- a/crates/ui-egui/src/widgets.rs
++++ b/crates/ui-egui/src/widgets.rs
+@@ -224,6 +224,7 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
+ }
+ 
+ /// The ArtCraft wordmark (Storyteller's brand, docs/brand/; not open source), sized to `height`.
++#[cfg(not(feature = "unbranded"))]
+ pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
+     let dark = ui.visuals().dark_mode;
+     let (uri, bytes): (&str, &'static [u8]) = if dark {
+@@ -235,6 +236,7 @@ pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
+ }
+ 
+ /// The ArtCraft mark (brand blue, works on light and dark), `size` points square.
++#[cfg(not(feature = "unbranded"))]
+ pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
+     ui.add(
+         egui::Image::from_bytes("bytes://artcraft-mark.svg", include_bytes!("../../../docs/brand/artcraft-mark.svg"))
+@@ -243,6 +245,12 @@ pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
+     )
+ }
+ 
++/// Unbranded builds draw no mark (see the `unbranded` feature).
++#[cfg(feature = "unbranded")]
++pub fn artcraft_mark(ui: &mut egui::Ui, _size: f32) -> Response {
++    ui.allocate_response(egui::Vec2::ZERO, egui::Sense::hover())
++}
++
+ /// Buttons for every community link (`pdfcraft_engine::links`), Discord first and prominent.
+ /// Returns the registry command of the one clicked.
+ pub fn community_links(ui: &mut egui::Ui) -> Option<&'static str> {
