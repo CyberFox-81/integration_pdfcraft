@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-#content.app-pdfcraft {
+#content.app-integration_pdfcraft {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;

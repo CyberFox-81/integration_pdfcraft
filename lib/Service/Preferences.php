@@ -7,15 +7,15 @@ declare(strict_types=1);
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-namespace OCA\PdfCraft\Service;
+namespace OCA\PdfCraftIntegration\Service;
 
-use OCA\PdfCraft\AppInfo\Application;
+use OCA\PdfCraftIntegration\AppInfo\Application;
 use OCP\Config\IUserConfig;
 use OCP\IAppConfig;
 
 /**
  * Whether clicking a PDF in Files opens it in PdfCraft. A user's own choice wins; otherwise the
- * admin default applies (`occ config:app:set pdfcraft open_by_default --value=true --type=boolean`).
+ * admin default applies (`occ config:app:set integration_pdfcraft open_by_default --value=true --type=boolean`).
  */
 class Preferences {
 	public function __construct(

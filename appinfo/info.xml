@@ -5,23 +5,35 @@
 -->
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
-	<id>pdfcraft</id>
-	<name>PdfCraft</name>
+	<id>integration_pdfcraft</id>
+	<name>PdfCraft integration</name>
 	<summary>Edit PDFs in your Nextcloud with the PdfCraft PDF workbench</summary>
 	<description><![CDATA[Open any PDF in Files with **Edit in PdfCraft** and work on it right in the browser: annotate and comment, fill and sign forms, organize, combine and split pages, redact, add bookmarks, page numbers and watermarks, and more.
 
-Saving writes the PDF straight back to Nextcloud (with file versions, so earlier states can be restored). **Save As** stores a copy in any folder you pick.
+- **Save** writes the PDF straight back to Nextcloud, which keeps the previous state as a file version.
+- **Save As** stores a copy in any folder you pick.
+- Read-only files open normally; saving offers a copy.
+- If someone else changes the file while you have it open, you choose whether to replace their version or save a copy.
+- Optionally, clicking a PDF in Files opens it in PdfCraft instead of the viewer.
 
-PdfCraft runs entirely in your browser as WebAssembly: documents are never sent to a third-party service, and the server needs no extra software.
+PdfCraft runs entirely in your browser as WebAssembly. Documents go only between your browser and your Nextcloud, and the server needs no extra software.
 
-PdfCraft (formerly PrintCraft) is an open-source, Rust-native PDF application: https://github.com/storytold/printcraft]]></description>
+This is a community integration. [PdfCraft](https://github.com/storytold/pdfcraft) (formerly PrintCraft) is an open-source, Rust-native PDF application by the ArtCraft team; this app embeds a build of it and is not affiliated with them.
+
+**Requirements:** a browser with WebGL2, and a web server that serves `.wasm` files as `application/wasm` (Nextcloud's own Apache and nginx configurations do).]]></description>
 	<version>0.1.0</version>
 	<licence>agpl</licence>
-	<author mail="brittondcouchman@gmail.com">Britton Couchman</author>
-	<namespace>PdfCraft</namespace>
+	<author mail="brittondcouchman@gmail.com" homepage="https://github.com/CyberFox-81">Britton Couchman</author>
+	<namespace>PdfCraftIntegration</namespace>
 	<category>files</category>
+	<category>integration</category>
 	<category>office</category>
-	<bugs>https://github.com/storytold/printcraft/issues</bugs>
+	<website>https://github.com/CyberFox-81/integration_pdfcraft</website>
+	<bugs>https://github.com/CyberFox-81/integration_pdfcraft/issues</bugs>
+	<repository type="git">https://github.com/CyberFox-81/integration_pdfcraft.git</repository>
+	<screenshot>https://raw.githubusercontent.com/CyberFox-81/integration_pdfcraft/main/screenshots/editor.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/CyberFox-81/integration_pdfcraft/main/screenshots/files-action.png</screenshot>
+	<screenshot>https://raw.githubusercontent.com/CyberFox-81/integration_pdfcraft/main/screenshots/save-as.png</screenshot>
 	<dependencies>
 		<nextcloud min-version="33" max-version="35"/>
 	</dependencies>

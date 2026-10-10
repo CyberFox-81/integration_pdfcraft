@@ -7,10 +7,10 @@ declare(strict_types=1);
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-namespace OCA\PdfCraft\Controller;
+namespace OCA\PdfCraftIntegration\Controller;
 
-use OCA\PdfCraft\AppInfo\Application;
-use OCA\PdfCraft\Service\Preferences;
+use OCA\PdfCraftIntegration\AppInfo\Application;
+use OCA\PdfCraftIntegration\Service\Preferences;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
@@ -71,7 +71,7 @@ class EditorController extends Controller {
 			'uid' => $user->getUID(),
 		]);
 		$this->initialState->provideInitialState('urls', [
-			'frame' => $this->urlGenerator->linkToRoute('pdfcraft.frame.index', [
+			'frame' => $this->urlGenerator->linkToRoute(Application::APP_ID . '.frame.index', [
 				'host' => 'parent',
 				'author' => $user->getDisplayName(),
 			]),
@@ -84,7 +84,7 @@ class EditorController extends Controller {
 		$this->initialState->provideInitialState('openByDefault', $this->preferences->openByDefault($user->getUID()));
 
 		Util::addStyle(Application::APP_ID, 'editor');
-		Util::addScript(Application::APP_ID, 'pdfcraft-editor');
+		Util::addScript(Application::APP_ID, Application::APP_ID . '-editor');
 
 		$response = new TemplateResponse(Application::APP_ID, 'editor', ['name' => $file->getName()]);
 		$csp = new ContentSecurityPolicy();

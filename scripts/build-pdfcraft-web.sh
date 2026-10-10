@@ -6,7 +6,7 @@
 #
 # Usage: scripts/build-pdfcraft-web.sh [PDFCRAFT_CHECKOUT]
 #
-#   PDFCRAFT_CHECKOUT  an existing clone of github.com/storytold/printcraft. Without it the
+#   PDFCRAFT_CHECKOUT  an existing clone of github.com/storytold/pdfcraft. Without it the
 #                      script clones PDFCRAFT_REF into build/printcraft.
 #
 # Needs: Rust with the wasm32-unknown-unknown target (rustup target add wasm32-unknown-unknown)
@@ -29,7 +29,7 @@ OUT="$APP_DIR/web"
 TARGET_DIR="${CARGO_TARGET_DIR:-$SRC/target}"
 
 if [ ! -d "$SRC/.git" ]; then
-	git clone https://github.com/storytold/printcraft.git "$SRC"
+	git clone https://github.com/storytold/pdfcraft.git "$SRC"
 	git -C "$SRC" checkout --quiet "$PDFCRAFT_REF"
 fi
 

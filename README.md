@@ -2,9 +2,9 @@
   - SPDX-FileCopyrightText: 2026 Britton Couchman <brittondcouchman@gmail.com>
   - SPDX-License-Identifier: AGPL-3.0-or-later
 -->
-# PdfCraft for Nextcloud
+# PdfCraft integration for Nextcloud
 
-Edit the PDFs in your Nextcloud with [PdfCraft](https://github.com/storytold/printcraft) (formerly PrintCraft), the open-source, Rust-native PDF workbench, without leaving the browser.
+Edit the PDFs in your Nextcloud with [PdfCraft](https://github.com/storytold/pdfcraft) (formerly PrintCraft), the open-source, Rust-native PDF workbench, without leaving the browser.
 
 - **Edit in PdfCraft** appears in the Files action menu of every PDF you can read.
 - **Save** (Ctrl/⌘+S) writes the PDF back to Nextcloud, which keeps the previous state as a file version.
@@ -24,23 +24,27 @@ PdfCraft runs entirely in your browser as WebAssembly. Documents go only between
 
 ## Install
 
-1. Download `pdfcraft-<version>.tar.gz` and extract it into your Nextcloud's `apps/` (or `custom_apps/`) folder, so you have `apps/pdfcraft/appinfo/info.xml`.
-2. Make it readable by the web server user, e.g. `chown -R www-data:www-data apps/pdfcraft`.
-3. Enable it: `sudo -u www-data php occ app:enable pdfcraft` (or in **Apps ▸ Your apps**).
+From the Nextcloud App Store: **Apps ▸ Integration ▸ PdfCraft integration ▸ Download and enable**, or `sudo -u www-data php occ app:install integration_pdfcraft`.
+
+Manually:
+
+1. Download `integration_pdfcraft-<version>.tar.gz` from the [releases](https://github.com/CyberFox-81/integration_pdfcraft/releases) and extract it into your Nextcloud's `custom_apps/` (or `apps/`) folder, so you have `custom_apps/integration_pdfcraft/appinfo/info.xml`.
+2. Make it readable by the web server user, e.g. `chown -R www-data:www-data custom_apps/integration_pdfcraft`.
+3. Enable it: `sudo -u www-data php occ app:enable integration_pdfcraft`. In Docker: `docker exec -u www-data nextcloud php occ app:enable integration_pdfcraft`.
 
 To make PdfCraft the click-to-open default for every user who hasn't chosen otherwise:
 
 ```sh
-sudo -u www-data php occ config:app:set pdfcraft open_by_default --value=true --type=boolean
+sudo -u www-data php occ config:app:set integration_pdfcraft open_by_default --value=true --type=boolean
 ```
 
 ## How it works
 
 ```
-Files ── "Edit in PdfCraft" ──▶ /apps/pdfcraft/edit/{fileId}   (Nextcloud page, src/editor.ts)
+Files ── "Edit in PdfCraft" ──▶ /apps/integration_pdfcraft/edit/{fileId}   (src/editor.ts)
                                   │  WebDAV GET/PUT with the user's session
                                   ▼
-                                <iframe> /apps/pdfcraft/frame?host=parent   (templates/frame.php)
+                                <iframe> /apps/integration_pdfcraft/frame?host=parent   (templates/frame.php)
                                   │  PdfCraft (web/*.wasm) — postMessage bridge
 ```
 
@@ -56,12 +60,37 @@ PdfCraft's browser build saves by downloading a file. `patches/pdfcraft-nextclou
 ```sh
 make js      # npm ci && vite build → js/
 make wasm    # clone PdfCraft, apply the patch, build → web/   (needs Rust, see below)
-make dist    # → build/dist/pdfcraft-<version>.tar.gz
+make dist    # → build/dist/integration_pdfcraft-<version>.tar.gz
 ```
 
 `make wasm` runs `scripts/build-pdfcraft-web.sh`, which needs the `wasm32-unknown-unknown` Rust target, `wasm-bindgen-cli` at the version in PdfCraft's `Cargo.lock` (0.2.129 at the pinned commit), and optionally `wasm-opt` from binaryen. Set `PDFCRAFT_REF` to build another PdfCraft commit, `FAST=1` for quicker development builds, and `CRAFT_FONTS_DIR` to a clone of [storytold/craft-fonts](https://github.com/storytold/craft-fonts) to embed PdfCraft's Japanese fonts as its official builds do.
 
-For development, `npm run watch` rebuilds the scripts as you edit; symlink or copy the repository into `apps/pdfcraft` of a test server.
+For development, `npm run watch` rebuilds the scripts as you edit; symlink or copy the repository into `custom_apps/integration_pdfcraft` of a test server.
+
+## Releasing to the App Store
+
+One-time setup (see the [App Store developer guide](https://nextcloudappstore.readthedocs.io/en/latest/developer.html)):
+
+1. Create the app's key and certificate request, and keep the key private and backed up:
+   ```sh
+   mkdir -p ~/.nextcloud/certificates && cd ~/.nextcloud/certificates
+   openssl req -nodes -newkey rsa:4096 -keyout integration_pdfcraft.key -out integration_pdfcraft.csr -subj "/CN=integration_pdfcraft"
+   ```
+2. Submit `integration_pdfcraft.csr` as `integration_pdfcraft/integration_pdfcraft.csr` in a pull request to [nextcloud/app-certificate-requests](https://github.com/nextcloud/app-certificate-requests). Save the signed certificate they reply with as `~/.nextcloud/certificates/integration_pdfcraft.crt`.
+3. Register the app at [apps.nextcloud.com/developer/apps/new](https://apps.nextcloud.com/developer/apps/new) with the certificate and this signature:
+   ```sh
+   echo -n "integration_pdfcraft" | openssl dgst -sha512 -sign ~/.nextcloud/certificates/integration_pdfcraft.key | openssl base64
+   ```
+
+Each release:
+
+```sh
+make js && make wasm
+scripts/sign-release.sh --key ~/.nextcloud/certificates/integration_pdfcraft.key \
+  --cert ~/.nextcloud/certificates/integration_pdfcraft.crt --docker nextcloud
+```
+
+The script code-signs the app with `occ integrity:sign-app` (borrowed from a running Nextcloud container, or `--occ` for a local install), packs `build/dist/integration_pdfcraft-<version>.tar.gz` and prints the App Store signature. Attach the archive to a GitHub release, then submit its download URL and the signature at [apps.nextcloud.com/developer/apps/releases/new](https://apps.nextcloud.com/developer/apps/releases/new).
 
 ## Limitations
 

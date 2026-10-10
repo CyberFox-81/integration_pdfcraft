@@ -8,7 +8,7 @@
 
 First release.
 
-- "Edit in PdfCraft" in the Files action menu for PDFs (Nextcloud 33–35)
+- App ID `integration_pdfcraft`: "Edit in PdfCraft" in the Files action menu for PDFs (Nextcloud 33–35)
 - Editor page with PdfCraft 0.5.0 (commit 1c33e6f) in an iframe
 - Save writes back over WebDAV with conflict detection; Save As picks a name and folder
 - Read-only files save as a copy

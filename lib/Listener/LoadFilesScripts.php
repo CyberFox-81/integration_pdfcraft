@@ -7,11 +7,11 @@ declare(strict_types=1);
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-namespace OCA\PdfCraft\Listener;
+namespace OCA\PdfCraftIntegration\Listener;
 
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
-use OCA\PdfCraft\AppInfo\Application;
-use OCA\PdfCraft\Service\Preferences;
+use OCA\PdfCraftIntegration\AppInfo\Application;
+use OCA\PdfCraftIntegration\Service\Preferences;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
@@ -43,6 +43,6 @@ class LoadFilesScripts implements IEventListener {
 		}
 
 		$this->initialState->provideInitialState('openByDefault', $this->preferences->openByDefault($user->getUID()));
-		Util::addInitScript(Application::APP_ID, 'pdfcraft-files');
+		Util::addInitScript(Application::APP_ID, Application::APP_ID . '-files');
 	}
 }

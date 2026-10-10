@@ -7,9 +7,9 @@ declare(strict_types=1);
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-namespace OCA\PdfCraft\Controller;
+namespace OCA\PdfCraftIntegration\Controller;
 
-use OCA\PdfCraft\AppInfo\Application;
+use OCA\PdfCraftIntegration\AppInfo\Application;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

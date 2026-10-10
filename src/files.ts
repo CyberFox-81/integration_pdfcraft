@@ -13,7 +13,7 @@ import { generateUrl } from '@nextcloud/router'
 import { isPublicShare } from '@nextcloud/sharing/public'
 import { pdfCraftIcon } from './icon.ts'
 
-const openByDefault = loadState<boolean>('pdfcraft', 'openByDefault', false)
+const openByDefault = loadState<boolean>('integration_pdfcraft', 'openByDefault', false)
 
 /**
  * A PDF in the user's own file tree (not the trash bin, versions or a public share).
@@ -31,7 +31,7 @@ function isEditablePdf(node: INode | undefined): node is INode {
 
 const editAction: IFileAction = {
 	id: 'pdfcraft-edit',
-	displayName: () => t('pdfcraft', 'Edit in PdfCraft'),
+	displayName: () => t('integration_pdfcraft', 'Edit in PdfCraft'),
 	iconSvgInline: () => pdfCraftIcon,
 
 	enabled({ nodes }) {
@@ -43,7 +43,7 @@ const editAction: IFileAction = {
 		if (fileId === undefined) {
 			return false
 		}
-		window.location.assign(generateUrl('/apps/pdfcraft/edit/{fileId}', { fileId }))
+		window.location.assign(generateUrl('/apps/integration_pdfcraft/edit/{fileId}', { fileId }))
 		return null
 	},
 
