@@ -26,7 +26,7 @@
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PDFCRAFT_REF="${PDFCRAFT_REF:-b8ddf71e30959dc8a5ca4b66c40b8fcaea68cf76}"
+PDFCRAFT_REF="${PDFCRAFT_REF:-bbbe60015c571ebfc39708ee07777b89e267122a}"
 SRC="${1:-$APP_DIR/build/printcraft}"
 PATCH="$APP_DIR/patches/pdfcraft-nextcloud.patch"
 OUT="$APP_DIR/web"

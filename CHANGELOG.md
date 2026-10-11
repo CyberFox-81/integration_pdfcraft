@@ -4,6 +4,10 @@
 -->
 # Changelog
 
+## 0.1.2 – 2026-10-11
+
+- PdfCraft 0.6.0 (main at bbbe600): the shared document workspace from the CraftSuite UI work and the other changes since b8ddf71.
+
 ## 0.1.1 – 2026-10-10
 
 - PdfCraft updated to its main branch at b8ddf71, 74 commits newer. It includes the embedding bridge this app uses (storytold/pdfcraft#842, merged upstream), so the bundled patch now only removes the ArtCraft marks.

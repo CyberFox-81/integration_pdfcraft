@@ -14,10 +14,10 @@ index a64d729..6d8a29e 100644
  pdfcraft-ui-egui = { workspace = true }
  eframe = { workspace = true, features = ["default_fonts", "glow", "persistence", "accesskit"] }
 diff --git a/crates/ui-egui/Cargo.toml b/crates/ui-egui/Cargo.toml
-index f7f0406..362eb06 100644
+index 713e5b2..1459c8e 100644
 --- a/crates/ui-egui/Cargo.toml
 +++ b/crates/ui-egui/Cargo.toml
-@@ -68,3 +68,8 @@ skrifa = "0.44"
+@@ -70,3 +70,8 @@ skrifa = "0.44"
  [build-dependencies]
  serde_json = { workspace = true }
  toml = "1"
