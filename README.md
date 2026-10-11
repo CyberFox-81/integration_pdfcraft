@@ -50,10 +50,9 @@ Files ── "Edit in PdfCraft" ──▶ /apps/integration_pdfcraft/edit/{fileI
 
 The editor page downloads the PDF over WebDAV and passes it to PdfCraft with `postMessage`. When you save, PdfCraft passes the bytes back and the page uploads them with `If-Match`, so a newer version on the server is never overwritten without asking. The frame page is the only one whose Content Security Policy allows compiling WebAssembly.
 
-PdfCraft's browser build saves by downloading a file. `patches/pdfcraft-nextcloud.patch` makes two small, generic additions, both meant to be proposed upstream:
+PdfCraft has an opt-in embedding bridge (`?host=parent`) since [storytold/pdfcraft#842](https://github.com/storytold/pdfcraft/pull/842), contributed for this app: a same-origin parent page can open files in PdfCraft and receive its saves. The protocol is described in [web/README.md](web/README.md). It is in PdfCraft's main branch, but not yet in a release (the latest is 0.4.0).
 
-- an opt-in embedding bridge (`?host=parent`) so a same-origin parent page can open files in PdfCraft and receive its saves. The protocol is described in [web/README.md](web/README.md);
-- an `unbranded` build feature that leaves out the ArtCraft logos. PdfCraft's code is MIT/Apache, but its brand terms (`docs/brand/LICENSE-brand.txt` upstream) don't allow modified builds to carry the ArtCraft marks, so the bundled build uses it. If the bridge lands upstream, an official build can be used as is.
+`patches/pdfcraft-nextcloud.patch` adds only an `unbranded` build feature that leaves out the ArtCraft logos. PdfCraft's code is MIT/Apache, but its brand terms (`docs/brand/LICENSE-brand.txt` upstream) don't allow modified builds to carry the ArtCraft marks, so the build bundled here leaves them out.
 
 ## Build from source
 

@@ -2,7 +2,11 @@
 # SPDX-FileCopyrightText: 2026 Britton Couchman <brittondcouchman@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# Build PdfCraft for the browser, with the embedding bridge from patches/, into web/.
+# Build PdfCraft for the browser, without the ArtCraft marks (patches/), into web/.
+#
+# PdfCraft has the embedding bridge this app uses since storytold/pdfcraft#842 (b34b326). The
+# patch only adds the `unbranded` feature: a build we make is a modified version of PdfCraft,
+# which must not carry the ArtCraft marks (docs/brand/LICENSE-brand.txt).
 #
 # Usage: scripts/build-pdfcraft-web.sh [PDFCRAFT_CHECKOUT]
 #
@@ -22,19 +26,23 @@
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PDFCRAFT_REF="${PDFCRAFT_REF:-1c33e6f851fc4a75805c9d3504c578a7623bbac5}"
+PDFCRAFT_REF="${PDFCRAFT_REF:-b8ddf71e30959dc8a5ca4b66c40b8fcaea68cf76}"
 SRC="${1:-$APP_DIR/build/printcraft}"
 PATCH="$APP_DIR/patches/pdfcraft-nextcloud.patch"
 OUT="$APP_DIR/web"
 TARGET_DIR="${CARGO_TARGET_DIR:-$SRC/target}"
 
-if [ ! -d "$SRC/.git" ]; then
+if [ ! -e "$SRC/.git" ]; then
 	git clone https://github.com/storytold/pdfcraft.git "$SRC"
 	git -C "$SRC" checkout --quiet "$PDFCRAFT_REF"
 fi
 
-if grep -q 'host_save' "$SRC/crates/ui-egui/src/lib.rs"; then
-	echo "bridge patch already applied"
+if ! grep -q 'host_save' "$SRC/crates/ui-egui/src/lib.rs"; then
+	echo "error: this PdfCraft has no embedding bridge; use b34b326 (storytold/pdfcraft#842) or later" >&2
+	exit 1
+fi
+if grep -q '^unbranded' "$SRC/crates/ui-egui/Cargo.toml"; then
+	echo "unbranded patch already applied"
 else
 	git -C "$SRC" apply "$PATCH"
 fi

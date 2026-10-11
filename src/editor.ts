@@ -509,8 +509,16 @@ async function closeEditor(): Promise<void> {
 			return
 		}
 	}
+	leaveTo(filesUrl)
+}
+
+/** Leave the editor when the user has already chosen to (or nothing is unsaved). */
+function leaveTo(url: string): void {
 	leaving = true
-	window.location.assign(filesUrl)
+	// PdfCraft asks the browser to confirm leaving while it has unsaved changes. The user has
+	// answered our question already, and removing the frame first spares them a second one.
+	frame.remove()
+	window.location.assign(url)
 }
 
 function hasUnsavedWork(): boolean {
@@ -583,10 +591,7 @@ function showOverlay(text: string, isError = false): void {
 	message.textContent = text
 	overlay.append(message)
 	if (isError) {
-		overlay.append(button(t('integration_pdfcraft', 'Back to Files'), 'pdfcraft-button', () => {
-			leaving = true
-			window.location.assign(filesUrl)
-		}))
+		overlay.append(button(t('integration_pdfcraft', 'Back to Files'), 'pdfcraft-button', () => leaveTo(filesUrl)))
 	}
 	overlay.dataset.error = String(isError)
 	overlay.hidden = false
