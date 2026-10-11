@@ -27,10 +27,10 @@ index 713e5b2..1459c8e 100644
 +# (docs/brand/LICENSE-brand.txt).
 +unbranded = []
 diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
-index 1da3a21..0fdc6b6 100644
+index 89040f8..3a58244 100644
 --- a/crates/ui-egui/src/dialogs.rs
 +++ b/crates/ui-egui/src/dialogs.rs
-@@ -1116,10 +1116,14 @@ pub fn show(app: &mut PdfCraftApp, ctx: &egui::Context) {
+@@ -1110,10 +1110,14 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                              .small(),
                          );
                          ui.add_space(12.0);
@@ -46,10 +46,10 @@ index 1da3a21..0fdc6b6 100644
                          if let Some(cmd) = widgets::community_links(ui) {
                              link_command = Some(cmd);
 diff --git a/crates/ui-egui/src/widgets.rs b/crates/ui-egui/src/widgets.rs
-index 21448bd..7023b6a 100644
+index bf440d3..f5305d3 100644
 --- a/crates/ui-egui/src/widgets.rs
 +++ b/crates/ui-egui/src/widgets.rs
-@@ -224,6 +224,7 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
+@@ -397,6 +397,7 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
  }
  
  /// The ArtCraft wordmark (Storyteller's brand, docs/brand/; not open source), sized to `height`.
@@ -57,7 +57,7 @@ index 21448bd..7023b6a 100644
  pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
      let dark = ui.visuals().dark_mode;
      let (uri, bytes): (&str, &'static [u8]) = if dark {
-@@ -235,6 +236,7 @@ pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
+@@ -408,6 +409,7 @@ pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
  }
  
  /// The ArtCraft mark (brand blue, works on light and dark), `size` points square.
@@ -65,7 +65,7 @@ index 21448bd..7023b6a 100644
  pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
      ui.add(
          egui::Image::from_bytes("bytes://artcraft-mark.svg", include_bytes!("../../../docs/brand/artcraft-mark.svg"))
-@@ -243,6 +245,12 @@ pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
+@@ -416,6 +418,12 @@ pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
      )
  }
  

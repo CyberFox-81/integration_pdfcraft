@@ -4,6 +4,10 @@
 -->
 # Changelog
 
+## 0.1.3 – 2026-10-11
+
+- PdfCraft 0.6.0 (main at fe2eadb): the latest PdfCraft, 122 commits newer
+
 ## 0.1.2 – 2026-10-11
 
 - PdfCraft 0.6.0 (main at bbbe600): the shared document workspace from the CraftSuite UI work and the other changes since b8ddf71.
