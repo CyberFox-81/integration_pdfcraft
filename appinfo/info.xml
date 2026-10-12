@@ -21,7 +21,7 @@ PdfCraft runs entirely in your browser as WebAssembly. Documents go only between
 This is a community integration based on [PdfCraft](https://github.com/storytold/pdfcraft) (formerly PrintCraft) by the ArtCraft team, an open-source, Rust-native PDF application. It embeds a build of PdfCraft and is not made or endorsed by the ArtCraft team.
 
 **Requirements:** a browser with WebGL2, and a web server that serves `.wasm` files as `application/wasm` (Nextcloud's own Apache and nginx configurations do).]]></description>
-	<version>0.1.5</version>
+	<version>0.1.6</version>
 	<licence>agpl</licence>
 	<author mail="brittondcouchman@gmail.com" homepage="https://github.com/CyberFox-81">Britton Couchman</author>
 	<namespace>PdfCraftIntegration</namespace>
