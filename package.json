@@ -1,6 +1,6 @@
 {
   "name": "integration_pdfcraft",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "description": "Edit PDFs in Nextcloud with PdfCraft",
   "license": "AGPL-3.0-or-later",

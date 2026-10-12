@@ -4,6 +4,10 @@
 -->
 # Changelog
 
+## 0.1.4 – 2026-10-11
+
+- PdfCraft 0.6.0 (main at 6d843a8): the latest PdfCraft
+
 ## 0.1.3 – 2026-10-11
 
 - PdfCraft 0.6.0 (main at fe2eadb): the latest PdfCraft, 122 commits newer
