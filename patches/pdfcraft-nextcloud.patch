@@ -14,10 +14,10 @@ index a64d729..6d8a29e 100644
  pdfcraft-ui-egui = { workspace = true }
  eframe = { workspace = true, features = ["default_fonts", "glow", "persistence", "accesskit"] }
 diff --git a/crates/ui-egui/Cargo.toml b/crates/ui-egui/Cargo.toml
-index 8ee4e68..1667f2a 100644
+index 5400829..9c50646 100644
 --- a/crates/ui-egui/Cargo.toml
 +++ b/crates/ui-egui/Cargo.toml
-@@ -72,3 +72,8 @@ skrifa = "0.44"
+@@ -75,3 +75,8 @@ skrifa = "0.44"
  [build-dependencies]
  serde_json = { workspace = true }
  toml = "1"
@@ -27,10 +27,10 @@ index 8ee4e68..1667f2a 100644
 +# (docs/brand/LICENSE-brand.txt).
 +unbranded = []
 diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
-index 499d0e4..4c03c63 100644
+index 6eceff1..7ae4984 100644
 --- a/crates/ui-egui/src/dialogs.rs
 +++ b/crates/ui-egui/src/dialogs.rs
-@@ -1111,10 +1111,14 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
+@@ -1112,10 +1112,14 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                              .small(),
                          );
                          ui.add_space(12.0);
