@@ -14,7 +14,7 @@ index a64d729d..6d8a29e4 100644
  pdfcraft-ui-egui = { workspace = true }
  eframe = { workspace = true, features = ["default_fonts", "glow", "persistence", "accesskit"] }
 diff --git a/crates/ui-egui/Cargo.toml b/crates/ui-egui/Cargo.toml
-index aa9fe54f..dede0677 100644
+index 42e9474f..61481bf9 100644
 --- a/crates/ui-egui/Cargo.toml
 +++ b/crates/ui-egui/Cargo.toml
 @@ -83,3 +83,8 @@ skrifa = "0.44"
@@ -27,10 +27,10 @@ index aa9fe54f..dede0677 100644
 +# (docs/brand/LICENSE-brand.txt).
 +unbranded = []
 diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
-index 2d240762..30cd6cb7 100644
+index 981db214..d65345c1 100644
 --- a/crates/ui-egui/src/dialogs.rs
 +++ b/crates/ui-egui/src/dialogs.rs
-@@ -1169,10 +1169,14 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
+@@ -1171,10 +1171,14 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                              .small(),
                          );
                          ui.add_space(12.0);
@@ -46,7 +46,7 @@ index 2d240762..30cd6cb7 100644
                          if let Some(cmd) = widgets::community_links(ui) {
                              link_command = Some(cmd);
 diff --git a/crates/ui-egui/src/widgets.rs b/crates/ui-egui/src/widgets.rs
-index 4f5aaa79..10217930 100644
+index c39f4cf0..ce960fa7 100644
 --- a/crates/ui-egui/src/widgets.rs
 +++ b/crates/ui-egui/src/widgets.rs
 @@ -500,6 +500,7 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
