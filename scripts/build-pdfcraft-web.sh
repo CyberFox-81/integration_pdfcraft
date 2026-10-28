@@ -26,7 +26,7 @@
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PDFCRAFT_REF="${PDFCRAFT_REF:-b1bf1cf01ff8d513a7a9bcb87d99933f2fb643f8}"
+PDFCRAFT_REF="${PDFCRAFT_REF:-1889690bfa65c908654cf3fe9a1e5f2f37dcbe02}"
 SRC="${1:-$APP_DIR/build/printcraft}"
 PATCH="$APP_DIR/patches/pdfcraft-nextcloud.patch"
 OUT="$APP_DIR/web"
@@ -81,6 +81,9 @@ mkdir -p "$OUT"
 rm -f "$OUT"/pdfcraft-web-*.js "$OUT"/pdfcraft-web-*.wasm
 cp "$STAGE/pdfcraft-web.js" "$OUT/$JS_NAME"
 cp "$STAGE/pdfcraft-web_bg.wasm" "$OUT/$WASM_NAME"
+# JavaScript snippets the glue imports (eframe's, for one), next to it.
+rm -rf "$OUT/snippets"
+if [ -d "$STAGE/snippets" ]; then cp -R "$STAGE/snippets" "$OUT/snippets"; fi
 
 # PdfCraft's licenses and the attributions for the fonts and icons compiled into it.
 for f in LICENSE-MIT LICENSE-APACHE NOTICE ATTRIBUTION.md; do

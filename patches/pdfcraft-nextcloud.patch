@@ -1,5 +1,5 @@
 diff --git a/apps/pdfcraft-web/Cargo.toml b/apps/pdfcraft-web/Cargo.toml
-index a64d729d..6d8a29e4 100644
+index ad8243d5..19dfc5fc 100644
 --- a/apps/pdfcraft-web/Cargo.toml
 +++ b/apps/pdfcraft-web/Cargo.toml
 @@ -9,6 +9,10 @@ publish = false
@@ -14,23 +14,23 @@ index a64d729d..6d8a29e4 100644
  pdfcraft-ui-egui = { workspace = true }
  eframe = { workspace = true, features = ["default_fonts", "glow", "persistence", "accesskit"] }
 diff --git a/crates/ui-egui/Cargo.toml b/crates/ui-egui/Cargo.toml
-index 42e9474f..61481bf9 100644
+index 804b5ea2..e73c7bf7 100644
 --- a/crates/ui-egui/Cargo.toml
 +++ b/crates/ui-egui/Cargo.toml
-@@ -83,3 +83,8 @@ skrifa = "0.44"
- [build-dependencies]
- serde_json = { workspace = true }
- toml = "1"
+@@ -104,3 +104,8 @@ toml = "1"
+ [target.'cfg(target_os = "macos")'.dev-dependencies]
+ # Only synthetic attribute fixtures use xattr; product reads/writes use rustix.
+ xattr = "1.6"
 +
 +[features]
 +# Leave out the ArtCraft marks (docs/brand/), which modified builds must not carry
 +# (docs/brand/LICENSE-brand.txt).
 +unbranded = []
 diff --git a/crates/ui-egui/src/dialogs.rs b/crates/ui-egui/src/dialogs.rs
-index 981db214..d65345c1 100644
+index d0e9482d..46cf7f0f 100644
 --- a/crates/ui-egui/src/dialogs.rs
 +++ b/crates/ui-egui/src/dialogs.rs
-@@ -1171,10 +1171,14 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
+@@ -1360,10 +1360,14 @@ fn dialogs(app: &mut PdfCraftApp, ctx: &egui::Context) {
                              .small(),
                          );
                          ui.add_space(12.0);
@@ -46,10 +46,10 @@ index 981db214..d65345c1 100644
                          if let Some(cmd) = widgets::community_links(ui) {
                              link_command = Some(cmd);
 diff --git a/crates/ui-egui/src/widgets.rs b/crates/ui-egui/src/widgets.rs
-index c39f4cf0..ce960fa7 100644
+index cb34b590..6100badd 100644
 --- a/crates/ui-egui/src/widgets.rs
 +++ b/crates/ui-egui/src/widgets.rs
-@@ -500,6 +500,7 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
+@@ -556,6 +556,7 @@ pub fn progress_notice(app: &PdfCraftApp, ctx: &egui::Context) -> bool {
  }
  
  /// The ArtCraft wordmark (Storyteller's brand, docs/brand/; not open source), sized to `height`.
@@ -57,7 +57,7 @@ index c39f4cf0..ce960fa7 100644
  pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
      let dark = ui.visuals().dark_mode;
      let (uri, bytes): (&str, &'static [u8]) = if dark {
-@@ -511,6 +512,7 @@ pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
+@@ -567,6 +568,7 @@ pub fn artcraft_logo(ui: &mut egui::Ui, height: f32) -> Response {
  }
  
  /// The ArtCraft mark (brand blue, works on light and dark), `size` points square.
@@ -65,7 +65,7 @@ index c39f4cf0..ce960fa7 100644
  pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
      ui.add(
          egui::Image::from_bytes("bytes://artcraft-mark.svg", include_bytes!("../../../docs/brand/artcraft-mark.svg"))
-@@ -519,6 +521,12 @@ pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
+@@ -575,6 +577,12 @@ pub fn artcraft_mark(ui: &mut egui::Ui, size: f32) -> Response {
      )
  }
  
