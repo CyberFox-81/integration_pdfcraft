@@ -4,6 +4,10 @@
 -->
 # Changelog
 
+## 0.1.11 – 2026-11-09
+
+- PdfCraft 0.18.1 (main at ccda1b0): the latest PdfCraft.
+
 ## 0.1.10 – 2026-10-27
 
 - PdfCraft 0.14.0 (main at 1889690): the latest PdfCraft.
